@@ -49,6 +49,7 @@ contract TenancyAgreementFactory {
     }
     
     PropertyManager public owningPropertyManager;
+    address public tokenAddress;
     // Mapping from tenant address to Agreement
     mapping (address => TenancyAgreement) public tenancyAgreements;
     uint currentProposalId = 0;
@@ -57,9 +58,10 @@ contract TenancyAgreementFactory {
     
 
     // Creates a new lunch venue contract
-    constructor(uint _licenseNumber) public {
+    constructor(uint _licenseNumber, address _tokenAddress) public {
         PropertyManager memory newPropertyManager = PropertyManager({licenseNumber: _licenseNumber, managerAddress: msg.sender});
         owningPropertyManager = newPropertyManager;
+        tokenAddress = _tokenAddress;
     }
     
     function proposeLeaseAsOwner(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks) public returns (uint proposalId) {
@@ -95,7 +97,7 @@ contract TenancyAgreementFactory {
     } 
     
     function acceptLease(uint proposalId) public payable returns (address leaseAgreementAddress) {
-        TenancyProposal memory newTenancyProposal
+        // TenancyProposal memory newTenancyProposal
         //TODO
     }
  
