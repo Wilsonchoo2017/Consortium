@@ -22,6 +22,7 @@ App = {
   },
 
   initWeb3: async function() {
+    console.log(window.web3.currentProvider);
     // Modern dapp browsers...
     if (window.ethereum) {
       App.web3Provider = window.ethereum;
@@ -32,14 +33,17 @@ App = {
         // User denied account access...
         console.error("User denied account access")
       }
+      console.log('web3 ethereum');
     }
     // Legacy dapp browsers...
     else if (window.web3) {
       App.web3Provider = window.web3.currentProvider;
+      console.log('web3 2');
     }
     // If no injected web3 instance is detected, fall back to Ganache
     else {
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
+      console.log('web3 ganache');
     }
     web3 = new Web3(App.web3Provider);
     console.log('init');
@@ -77,25 +81,24 @@ App = {
     console.log('bind');
     $(document).on('click', '#create-btn', App.handleContract);
     $( "#create-btn" ).click(App.handleContract);
-    console.log('click create');
   },
 
   markAdopted: function(adopters, account) {
     var adoptionInstance;
 
-    App.contracts.Adoption.deployed().then(function(instance) {
-      adoptionInstance = instance;
-
-      return adoptionInstance.getAdopters.call();
-    }).then(function(adopters) {
-      for (i = 0; i < adopters.length; i++) {
-        if (adopters[i] !== '0x0000000000000000000000000000000000000000') {
-          $('.panel-pet').eq(i).find('button').text('Success').attr('disabled', true);
-        }
-      }
-    }).catch(function(err) {
-      console.log(err.message);
-    });
+    // App.contracts.Adoption.deployed().then(function(instance) {
+    //   adoptionInstance = instance;
+    //
+    //   return adoptionInstance.getAdopters.call();
+    // }).then(function(adopters) {
+    //   for (i = 0; i < adopters.length; i++) {
+    //     if (adopters[i] !== '0x0000000000000000000000000000000000000000') {
+    //       $('.panel-pet').eq(i).find('button').text('Success').attr('disabled', true);
+    //     }
+    //   }
+    // }).catch(function(err) {
+    //   console.log(err.message);
+    // });
   },
 
   handleContract: function(event) {
@@ -113,7 +116,7 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        return tenancyInstance.proposeLeaseAsOwner(0x0000000, 500,true, 4, true, 2, {from: account});
+        return tenancyInstance.proposeLeaseAsOwner(account, 500,true, 4, true, 2, {from: account});
         // Execute adopt as a transaction by sending account
         // return tenancyInstance.adopt(petId, {from: account});
       }).then(function(result) {
@@ -127,14 +130,6 @@ App = {
   }
 
 };
-
-$(function() {
-  $(window).load(function() {
-    App.init();
-  });
-  console.log('load 1');
-});
-
 
 !(function($) {
   "use strict";
