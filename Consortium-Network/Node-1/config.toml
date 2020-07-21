@@ -1,0 +1,51 @@
+# Valid TOML config file
+
+# Data Path
+data-path="./data"
+
+# Genesis File
+genesis-file="../genesis.json"
+
+# Network
+# bootnodes=["enode://13abefa2b7f78242851e657e970e382a18ecddf2e3160a658a2174afa1ae17103601caaf47c1a40b98d7cba97f95adcf91eaa3c00a62ce7f5a809a4906b3bdac@172.31.53.14:30303"]
+
+# Mining
+miner-enabled=true
+miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+
+# Free Gas
+min-gas-price=0
+
+# P2P
+p2p-enabled=true
+# p2p-host="172.31.61.95" # Local host by default
+p2p-port="30303"
+
+
+# Host Whitelist
+host-whitelist=["*"]
+
+# Metrics
+# metrics-enabled=true
+# metrics-host="0.0.0.0" 
+# metrics-port="9545"
+
+
+# Rpc-http
+rpc-http-enabled=true
+rpc-http-api=["ADMIN","ETH","NET","PERM"]
+rpc-http-cors-origins=["*"]
+rpc-http-port=8545
+rpc-http-host="0.0.0.0"
+
+
+# rpc-websocket
+rpc-ws-enabled=true
+
+# Permissioning
+permissions-accounts-config-file-enabled=true
+permissions-nodes-config-file-enabled=true
+permissions-accounts-contract-enabled=true
+permissions-nodes-contract-enabled=true
+permissions-accounts-contract-address="0x0000000000000000000000000000000000008888"
+permissions-nodes-contract-address="0x0000000000000000000000000000000000009999"
