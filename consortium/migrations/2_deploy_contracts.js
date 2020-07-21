@@ -4,8 +4,8 @@
 //   deployer.deploy(Adoption);
 // };
 
-var TenancyAgreementFactory = artifacts.require("../contracts/TenancyAgreementFactory");
+var TenancyAgreementFactory = artifacts.require("TenancyAgreementFactory");
 
 module.exports = function(deployer) {
-  deployer.deploy(TenancyAgreementFactory,1, 0x627306090abaB3A6e1400e9345bC60c78a8BEf57);
+  deployer.deploy(TenancyAgreementFactory,1, "0x627306090abaB3A6e1400e9345bC60c78a8BEf57");
 };

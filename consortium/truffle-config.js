@@ -21,6 +21,10 @@ module.exports = {
       network_id: "*"
     }
   },
+  mocha: {
+    enableTimeouts: false,
+    before_timeout: 120000 // Here is 2min but can be whatever timeout is suitable for you.
+  },
   compilers: {
     solc: {
       version: "^0.6.0" // A version or constraint - Ex. "^0.5.0"

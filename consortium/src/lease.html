@@ -87,25 +87,32 @@
                     </div>
                     <div class="form-group">
                         <label for="rent">Weekly Rent Price (AUD)</label>
-                        <input type="text" name="rent" class="form-control" id="rent" placeholder="Weekly Rent Price" />
+                        <input type="text" name="rent" class="form-control" id="rent" placeholder="Weekly Rent Price" required/>
                       </div>
                       <div class="form-group">
                         <label for="duration">Lease Duration</label>
-                        <input type="duration" class="form-control" name="duration" id="duration" placeholder="Duration" />
+                        <input type="duration" class="form-control" name="duration" id="duration" placeholder="Duration" required/>
                       </div>
                       <div class="form-group">
                         <label for="periodic">Periodic Lease</label>
-                        <input type="periodic" class="form-control" name="periodic" id="periodic" placeholder="Yes/No" />
+                        <!-- <input type="periodic" class="form-control" name="periodic" id="periodic" placeholder="Yes/No"/> -->
+                        <select id ="periodic">
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
                       </div>
                       <div class="form-group">
                         <label for="holding-deposit">Holding Deposit</label>
-                        <input type="holding-deposit" class="form-control" name="holding-deposit" id="holding-deposit" placeholder="Yes/No" />
+                        <select id ="holding-deposit">
+                          <option value="yes">Taken</option>
+                          <option value="no">Not taken</option>
+                        </select>
                       </div>
                       <div class="form-group">
                         <label for="bond">Rental Bond (In Weeks)</label>
-                        <input type="bond" class="form-control" name="bond" id="bond" placeholder="0-4" />
+                        <input type="bond" class="form-control" name="bond" id="bond" placeholder="0-4" required/>
                       </div>
-                  <button class = "get-started-btn" id = "create-btn">Create</button>
+                  <button class = "get-started-btn btn-adopt" id = "create-btn">Create</button>
                   </form>
                 </div>
             </div>

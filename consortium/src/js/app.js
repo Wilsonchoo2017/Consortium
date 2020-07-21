@@ -3,26 +3,11 @@ App = {
   contracts: {},
 
   init: async function() {
-    // Load pets.
-    // $.getJSON('../pets.json', function(data) {
-    //   var petsRow = $('#petsRow');
-    //   var petTemplate = $('#petTemplate');
-    //
-    //   for (i = 0; i < data.length; i ++) {
-    //     petTemplate.find('.panel-title').text('Create New Lease Contract');
-    //     petTemplate.find('.type').text(data[i].type);
-    //     petTemplate.find('.tenancy').text(data[i].tenancy);
-    //     petTemplate.find('.btn-adopt').attr('data-id', data[i].id);
-    //
-    //     petsRow.append(petTemplate.html());
-    //   }
-    // });
-    console.log('init 1');
+
     return await App.initWeb3();
   },
 
   initWeb3: async function() {
-    console.log(window.web3.currentProvider);
     // Modern dapp browsers...
     if (window.ethereum) {
       App.web3Provider = window.ethereum;
@@ -33,20 +18,17 @@ App = {
         // User denied account access...
         console.error("User denied account access")
       }
-      console.log('web3 ethereum');
     }
     // Legacy dapp browsers...
     else if (window.web3) {
       App.web3Provider = window.web3.currentProvider;
-      console.log('web3 2');
     }
     // If no injected web3 instance is detected, fall back to Ganache
     else {
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
-      console.log('web3 ganache');
     }
     web3 = new Web3(App.web3Provider);
-    console.log('init');
+
     return App.initContract();
   },
 
@@ -62,6 +44,7 @@ App = {
     //   // Use our contract to retrieve and mark the adopted pets
     //   return App.markAdopted();
     // });
+
     $.getJSON('TenancyAgreementFactory.json', function(data) {
       // Get the necessary contract artifact file and instantiate it with truffle-contract
       var TenancyAgreementFactoryArtifact = data;
@@ -69,7 +52,7 @@ App = {
 
       // Set the provider for our contract
       App.contracts.TenancyAgreementFactory.setProvider(App.web3Provider);
-      //return true;
+
       // Use our contract to retrieve and mark the adopted pets
       return App.markAdopted();
     });
@@ -78,9 +61,7 @@ App = {
   },
 
   bindEvents: function() {
-    console.log('bind');
     $(document).on('click', '#create-btn', App.handleContract);
-    $( "#create-btn" ).click(App.handleContract);
   },
 
   markAdopted: function(adopters, account) {
@@ -101,10 +82,10 @@ App = {
     // });
   },
 
+  // handle create new lease contract
   handleContract: function(event) {
     event.preventDefault();
     console.log('handling');
-    // var petId =  parseInt($(event.target).data('id'));
     var tenancyInstance;
 
     web3.eth.getAccounts(function(error, accounts) {
@@ -116,19 +97,26 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        return tenancyInstance.proposeLeaseAsOwner(account, 500,true, 4, true, 2, {from: account});
-        // Execute adopt as a transaction by sending account
-        // return tenancyInstance.adopt(petId, {from: account});
+        var rent = parseInt($('#rent').val());
+        var duration = parseInt($('#duration').val());
+        var bond = parseInt($('#bond').val());
+        var periodic = false;
+        if ($("#periodic :selected").val() == "yes"){
+          periodic = true;
+        }
+        var hd = false;
+        if ($("#holding-deposit :selected").val() == "yes"){
+          hd = true;
+        }
+        return tenancyInstance.proposeLeaseAsOwner(account, rent,periodic, duration, hd, bond, {from: account});
       }).then(function(result) {
         console.log('handle success');
-        // return App.markAdopted();
       }).catch(function(err) {
         console.log('handle fail');
         console.log(err.message);
       });
     });
   }
-
 };
 
 !(function($) {
