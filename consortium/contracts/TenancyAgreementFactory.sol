@@ -56,7 +56,7 @@ contract TenancyAgreementFactory {
     // Mapping from tenant address to Agreement
     mapping (address => address) public tenancyAgreements;
     uint currentProposalId = 0;
-    mapping (uint => TenancyProposal) public tenancyProposals;
+    mapping (address => TenancyProposal) public tenancyProposals; //TenancyProposals by tenant
     // mapping (uint => DisclosedPropertyDetails) public disclosedPropertyDetails;
     mapping (address => uint) public balances;
     ERC20 ercContract;
@@ -85,7 +85,8 @@ contract TenancyAgreementFactory {
             ownerApproved: true,
             isValid: true
         });
-        tenancyProposals[currentProposalId] = newTenancyProposal;
+        require (tenancyProposals[_tenant].primaryTenant == address(0), "Tenant already has a proposed Lease");
+        tenancyProposals[_tenant] = newTenancyProposal;
         currentProposalId++;
         return currentProposalId-1;
     }
@@ -106,7 +107,8 @@ contract TenancyAgreementFactory {
             ownerApproved: false,
             isValid: true
         });
-        tenancyProposals[currentProposalId] = newTenancyProposal;
+        require (tenancyProposals[_tenant].primaryTenant == address(0), "Tenant already has a proposed Lease");
+        tenancyProposals[_tenant] = newTenancyProposal;
         currentProposalId++;
         return currentProposalId-1;
     }
@@ -119,10 +121,14 @@ contract TenancyAgreementFactory {
     }
     
     
-    function ownerApproveLease(uint proposalId) public {
-        TenancyProposal memory cp = tenancyProposals[proposalId];
+    function rejectLease() public {
+        tenancyProposals[msg.sender].primaryTenant = address(0);
+    }
+    
+    function ownerApproveLease(address _tenantAddress) public {
+        TenancyProposal memory cp = tenancyProposals[_tenantAddress];
         require (msg.sender == cp.ownerAddress, "You are not the owner!");
-        tenancyProposals[proposalId].ownerApproved = true;
+        tenancyProposals[_tenantAddress].ownerApproved = true;
     }
     
     // @Rez - Extension 
@@ -136,18 +142,18 @@ contract TenancyAgreementFactory {
     // }
     
 
-    function negotiatePriceTenant(uint proposalId, uint newRent) public {
-        TenancyProposal memory cp = tenancyProposals[proposalId];
+    function negotiatePriceTenant(uint newRent) public {
+        TenancyProposal memory cp = tenancyProposals[msg.sender];
         require (msg.sender == cp.primaryTenant, "You are not allowed to negotiate the price");
         require (cp.isValid == true, "Lease is already under negotiation");
-        tenancyProposals[proposalId].rentPerWeek = newRent;
+        tenancyProposals[msg.sender].rentPerWeek = newRent;
     }
     
-    function negotiatePriceManagerOwner(uint proposalId, uint newRent) public {
-        TenancyProposal memory cp = tenancyProposals[proposalId];
+    function negotiatePriceManagerOwner(address tenantAddress, uint newRent) public {
+        TenancyProposal memory cp = tenancyProposals[tenantAddress];
         require (msg.sender == cp.managerAddress || msg.sender == cp.ownerAddress, "You are not allowed to negotiate price!");
-        tenancyProposals[proposalId].rentPerWeek = newRent;
-        tenancyProposals[proposalId].isValid = true;
+        tenancyProposals[tenantAddress].rentPerWeek = newRent;
+        tenancyProposals[tenantAddress].isValid = true;
     }
     
     
@@ -160,16 +166,16 @@ contract TenancyAgreementFactory {
         return true;
     }
     
-    function acceptLease(uint proposalId) public returns (TenancyAgreement leaseAgreementAddress) {
+    function acceptLease() public returns (TenancyAgreement leaseAgreementAddress) {
         // TenancyProposal memory newTenancyProposal
         //TODO
-        TenancyProposal memory cp = tenancyProposals[proposalId];
+        TenancyProposal memory cp = tenancyProposals[msg.sender];
         require (msg.sender == cp.primaryTenant, "You are not allowed to accept this lease");
         require (cp.accepted == false, "Tenancy agreement has already been accepted");
         require (cp.ownerApproved == true, "Owner has not yet approved of this Tenancy Proposal");
         require (cp.isValid == true, "Lease is not valid as still under negotiation");
         require (tenancyAgreements[msg.sender] == address(0), "User already has a tenancy agreement!");
-        tenancyProposals[proposalId].accepted = true;
+        tenancyProposals[msg.sender].accepted = true;
         TenancyAgreement newTenancyAgreement = new TenancyAgreement(cp.rentPerWeek, cp.periodicLease, cp.leaseDuration, cp.primaryTenant, cp.managerAddress, cp.ownerAddress, cp.holdingDeposit, cp.rentalBondInWeeks);
         tenancyAgreements[msg.sender] = address(newTenancyAgreement);
         uint weeksOfRentPayable = cp.rentalBondInWeeks;
