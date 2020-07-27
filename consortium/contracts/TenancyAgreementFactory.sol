@@ -91,6 +91,13 @@ contract TenancyAgreementFactory {
         return currentProposalId-1;
     }
     
+    function viewLeaseProposal() public view returns (uint rentPerWeek, bool periodicLease, uint leaseDuration, 
+                                                address managerAddress, address ownerAddress, bool holdingDeposit, uint rentalBondInWeeks) {
+        require (tenancyProposals[msg.sender].primaryTenant == msg.sender, "User does not have any active lease proposals!");
+        TenancyProposal memory tp = tenancyProposals[msg.sender];
+        return (tp.rentPerWeek, tp.periodicLease, tp.leaseDuration, tp.managerAddress, tp.ownerAddress, tp.holdingDeposit, tp.rentalBondInWeeks);
+    }
+    
     function proposeLeaseAsManager(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks, address _ownerAddress) public returns (uint proposalId) {
         require (_rentalBondInWeeks <= 4, "Rental Bond cannot be more than 4 weeks for rent");
         TenancyProposal memory newTenancyProposal = TenancyProposal({

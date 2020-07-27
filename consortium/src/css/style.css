@@ -520,6 +520,9 @@ section {
   margin-bottom: 0;
 }
 
+#bottom-row{
+  margin-top: 30px;
+}
 /*--------------------------------------------------------------
 # Steps
 --------------------------------------------------------------*/
@@ -747,7 +750,15 @@ section {
   color: #3d5782;
   content: "/";
 }
-.nego-form{
+#tenant-form{
+  display: none;
+}
+
+#owner-form{
+  display: none;
+}
+
+#owner-add-form{
   display: none;
 }
 

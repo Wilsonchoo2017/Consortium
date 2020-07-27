@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Create New Tenancy Agreement</title>
+  <title>Create New Lease Contract</title>
   <meta content="" name="descriptison">
   <meta content="" name="keywords">
 
@@ -80,10 +80,17 @@
               </div>
 
                 <div class="align-items-center">
-                  <form class="php-email-form">
+                  <h> Propose Lease As </h>
+                  <button class = "get-started-btn owner" id = "owner">Owner</button>
+                  <button class = "get-started-btn owner" id = "manager">Manager</button>
+                  <form id = "lease-form" class="php-email-form">
                     <div class="form-group">
                       <label for="rent">Tenant Address</label>
-                      <input type="text" name="tenant" class="form-control" id="tenant" placeholder="" />
+                      <input type="text" name="tenant" class="form-control" id="tenant-add" placeholder="" />
+                    </div>
+                    <div class="form-group" id = "owner-add-form">
+                      <label for="rent">Owner Address</label>
+                      <input type="text" name="tenant" class="form-control" id="owner-add" placeholder="" />
                     </div>
                     <div class="form-group">
                         <label for="rent">Weekly Rent Price (AUD)</label>
@@ -91,7 +98,7 @@
                       </div>
                       <div class="form-group">
                         <label for="duration">Lease Duration</label>
-                        <input type="duration" class="form-control" name="duration" id="duration" placeholder="Duration" required/>
+                        <input type="duration" class="form-control" name="duration" id="duration" placeholder="Duration in weeks" required/>
                       </div>
                       <div class="form-group">
                         <label for="periodic">Periodic Lease</label>

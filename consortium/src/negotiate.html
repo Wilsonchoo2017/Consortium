@@ -80,20 +80,16 @@
               </div>
 
                 <div class="align-items-center">
-                  <form  role="form">
-                    <!-- <div class="form-group">
-                      <label for="maintenance-tenant">Address</label>
-                      <input type="text" name="tenant" class="form-control" id="maintenance-tenant" placeholder="" />
-                    </div> -->
-                    <h> Negotiate as </h>
-                    <button class = "get-started-btn" type="submit" id = "tenant-btn">Tenant</button>
-                    <button class = "get-started-btn owner" type="submit" id = "owner-btn">Owner</button>
-                    <button class = "get-started-btn owner" type="submit" id = "manager-btn">Manager</button>
 
+                    <h> Negotiate as </h>
+                    <button class = "get-started-btn" id = "tenant-btn">Tenant</button>
+                    <button class = "get-started-btn owner" id = "owner-btn">Owner</button>
+                    <button class = "get-started-btn owner" id = "manager-btn">Manager</button>
+                    <form  role="form">
                     <div class="form-group nego-form" id ="tenant-form">
                         <label for="maintenance-desc">Offer Price (AUD)</label>
                         <input type="text" name="service" class="form-control" id="negotiate-price" />
-                        <button class = "get-started-btn" type="submit" id = "negotiate-btn">Submit</button>
+                        <button class = "get-started-btn nego" type="submit" id = "negotiate-tenant-btn">Submit</button>
                     </div>
 
                     <div class="form-group nego-form" id ="owner-form">
@@ -101,10 +97,9 @@
                         <input type="text" name="service" class="form-control" id="negotiate-price" />
 
                         <label for="maintenance-desc">Tenant Address</label>
-                        <input type="text" name="service" class="form-control" id="tenant-address" />
-                        <button class = "get-started-btn" type="submit" id = "negotiate-btn">Submit</button>
+                        <input type="text" name="service" class="form-control" id="tenant-nego-address" />
+                        <button class = "get-started-btn nego" type="submit" id = "negotiate-owner-btn">Submit</button>
                     </div>
-
 
                   </form>
                 </div>
