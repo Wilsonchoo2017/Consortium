@@ -45,18 +45,6 @@ App = {
   },
 
   initContract: function() {
-    // $.getJSON('Adoption.json', function(data) {
-    //   // Get the necessary contract artifact file and instantiate it with truffle-contract
-    //   var AdoptionArtifact = data;
-    //   App.contracts.Adoption = TruffleContract(AdoptionArtifact);
-    //
-    //   // Set the provider for our contract
-    //   App.contracts.Adoption.setProvider(App.web3Provider);
-    //
-    //   // Use our contract to retrieve and mark the adopted pets
-    //   return App.markAdopted();
-    // });
-
     $.getJSON('TenancyAgreementFactory.json', function(data) {
       // Get the necessary contract artifact file and instantiate it with truffle-contract
       var TenancyAgreementFactoryArtifact = data;
@@ -65,8 +53,6 @@ App = {
       // Set the provider for our contract
       App.contracts.TenancyAgreementFactory.setProvider(App.web3Provider);
 
-      // Use our contract to retrieve and mark the adopted pets
-      return App.markAdopted();
     });
 
     return App.bindEvents();
@@ -74,26 +60,21 @@ App = {
 
   bindEvents: function() {
     $(document).on('click', '#create-btn', App.handleContract);
+    $(document).on('click', '#pay-btn', App.payRent);
+    $(document).on('click', '#tenant-btn', App.showTenantForm);
+    $(document).on('click', '.owner', App.showOwnerForm);
+    $(document).on('click', '.nego', App.negotiate);
+    $(document).on('click', '#manager', App.showOwnerAdd);
+    $(document).on('click', '#view-btn', App.getLease);
+    $(document).on('click', '#bond-btn', App.getBond);
+
+
+    console.log('binding');
   },
 
-  markAdopted: function(adopters, account) {
-    var adoptionInstance;
-
-    // App.contracts.Adoption.deployed().then(function(instance) {
-    //   adoptionInstance = instance;
-    //
-    //   return adoptionInstance.getAdopters.call();
-    // }).then(function(adopters) {
-    //   for (i = 0; i < adopters.length; i++) {
-    //     if (adopters[i] !== '0x0000000000000000000000000000000000000000') {
-    //       $('.panel-pet').eq(i).find('button').text('Success').attr('disabled', true);
-    //     }
-    //   }
-    // }).catch(function(err) {
-    //   console.log(err.message);
-    // });
+  showOwnerAdd:function(event){
+    $("#owner-add-form").css("display", "block");
   },
-
   // handle create new lease contract
   handleContract: function(event) {
     event.preventDefault();
@@ -109,6 +90,8 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
+        var tenant = $('#tenant-add').val();
+        var owneradd = $('#owner-add').val();
         var rent = parseInt($('#rent').val());
         var duration = parseInt($('#duration').val());
         var bond = parseInt($('#bond').val());
@@ -120,9 +103,14 @@ App = {
         if ($("#holding-deposit :selected").val() == "yes"){
           hd = true;
         }
-        return tenancyInstance.proposeLeaseAsOwner(account, rent,periodic, duration, hd, bond, {from: account});
+        // propose lease as manager
+        if (owneradd){
+          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond,owner, {from: account});
+        }
+        // propose lease as owner
+        return tenancyInstance.proposeLeaseAsOwner(tenant, rent,periodic, duration, hd, bond, {from: account});
       }).then(function(result) {
-        console.log('handle success');
+        alert('create lease contract success');
       }).catch(function(err) {
         console.log('handle fail');
         console.log(err.message);
@@ -190,7 +178,144 @@ App = {
       console.log('handle fail');
       console.log(err.message);
     });
-  }
+  },
+  
+  showTenantForm: function(event) {
+      $("#tenant-form").css("display", "block");
+      $("#owner-form").css("display", "none");
+  },
+
+  showOwnerForm: function(event) {
+     $("#owner-form").css("display", "block");
+     $("#tenant-form").css("display", "none");
+  },
+  // handle negotiation
+  negotiate: function(event) {
+    event.preventDefault();
+    console.log('negotiating');
+    var tenancyInstance;
+
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+
+      var account = accounts[0];
+
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        tenancyInstance = instance;
+        var negoPrice = parseInt($('#negotiate-price').val());
+        var tenantAdd = parseInt($('#tenant-nego-address').val());
+        console.log(account);
+        // nego as tenant
+        if (event.target.id == "negotiate-tenant-btn"){
+          return tenancyInstance.negotiatePriceTenant(negoPrice, {from: account});
+        } else {
+          return tenancyInstance.negotiatePriceManagerOwner(tenantAdd,negoPrice, {from: account});
+        }
+      }).then(function(result) {
+        alert('nego success');
+      }).catch(function(err) {
+        console.log('nego fail');
+        console.log(err.message);
+      });
+    });
+  },
+
+  // handle pay rent
+  payRent: function(event) {
+    event.preventDefault();
+    console.log('paying');
+    var tenancyInstance;
+
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+
+      var account = accounts[0];
+
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        tenancyInstance = instance;
+        var rentTenant = parseInt($('#rent-tenant').val());
+        var rentPrice = parseInt($('#rent-price').val());
+        console.log(account);
+        return tenancyInstance.payRent(rentPrice, {from: account});
+      }).then(function(result) {
+        alert('pay rent success');
+      }).catch(function(err) {
+        console.log('pay rent fail');
+        console.log(err.message);
+      });
+    });
+  },
+
+  // sign lease
+  signLease: function(event) {
+    event.preventDefault();
+    var tenancyInstance;
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        tenancyInstance = instance;
+        return tenancyInstance.acceptLease( {from: account});
+      }).then(function(result) {
+        alert('lease signed!');
+      }).catch(function(err) {
+        console.log('sign lease fail');
+        console.log(err.message);
+      });
+    });
+  },
+  // get lease info
+  getLease: function(event) {
+    event.preventDefault();
+    var tenancyInstance;
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+
+      var leaseInstance;
+
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        leaseInstance = instance;
+
+        return leaseInstance.viewLeaseProposal.call();
+      }).then(function(rentPerWeek, periodicLease, leaseDuration, managerAddress, ownerAddress, holdingDeposit, rentalBondInWeeks) {
+        console.log(rentPerWeek);
+        console.log(periodicLease);
+      }).catch(function(err) {
+        console.log(err.message);
+      });
+    });
+  },
+  // get lease info
+  getBond: function(event) {
+    event.preventDefault();
+    var tenancyInstance;
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        tenancyInstance = instance;
+        return tenancyInstance.retrieveBond( {from: account});
+      }).then(function(result) {
+        alert('bond retrieved success');
+      }).catch(function(err) {
+        alert('bond fail to retrieve');
+      });
+    });
+  },
+
 };
 
 !(function($) {
@@ -242,15 +367,17 @@ App = {
 
   // Activate smooth scroll on page load with hash links in the url
   $(document).ready(function() {
-    if (window.location.hash) {
-      var initial_nav = window.location.hash;
-      if ($(initial_nav).length) {
-        var scrollto = $(initial_nav).offset().top - scrolltoOffset;
-        $('html, body').animate({
-          scrollTop: scrollto
-        }, 1500, 'easeInOutExpo');
-      }
-    }
+    // if (window.location.hash) {
+    //   var initial_nav = window.location.hash;
+    //   if ($(initial_nav).length) {
+    //     var scrollto = $(initial_nav).offset().top - scrolltoOffset;
+    //     $('html, body').animate({
+    //       scrollTop: scrollto
+    //     }, 1500, 'easeInOutExpo');
+    //   }
+    // }
+
+
   });
 
 
