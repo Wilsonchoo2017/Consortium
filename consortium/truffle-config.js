@@ -1,8 +1,23 @@
 
 const PrivateKeyProvider = require("@truffle/hdwallet-provider");
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+/* The adress used when sending transactions to the node */
+var address = process.env.BESU_NODE_PERM_ACCOUNT;
+
+/* The private key associated with the address above */
+var privateKey = process.env.BESU_NODE_PERM_KEY;
+
+/* The endpoint of the Ethereum node */
+var endpoint = process.env.BESU_NODE_PERM_ENDPOINT;
+if (endpoint === undefined) {
+  endpoint = "http://127.0.0.1:8545";
+}
 
 // insert the private key of the account used in metamask eg: Account 1 (Miner Coinbase Account)
-const privateKey = "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
+const privateKeyProvider = new PrivateKeyProvider(privateKey, "http://127.0.0.1:8545");
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -11,14 +26,9 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*" // Match any network id
-    },
-    develop: {
-      port: 8545
-    },
-    sampleNetworkWallet: {
+      network_id: "*", // Match any network id
       provider: () => new PrivateKeyProvider(privateKey, "http://localhost:8545"),
-      network_id: "*"
+      from: address
     }
   },
   mocha: {

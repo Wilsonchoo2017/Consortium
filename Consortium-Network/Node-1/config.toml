@@ -14,7 +14,7 @@ miner-enabled=true
 miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
 
 # Free Gas
-min-gas-price=0
+# min-gas-price=0
 
 # P2P
 p2p-enabled=true
@@ -36,16 +36,16 @@ rpc-http-enabled=true
 rpc-http-api=["ADMIN","ETH","NET","PERM"]
 rpc-http-cors-origins=["*"]
 rpc-http-port=8545
-rpc-http-host="0.0.0.0"
+# rpc-http-host="0.0.0.0"
 
 
 # rpc-websocket
 rpc-ws-enabled=true
 
 # Permissioning
-permissions-accounts-config-file-enabled=true
-permissions-nodes-config-file-enabled=true
-permissions-accounts-contract-enabled=true
-permissions-nodes-contract-enabled=true
-permissions-accounts-contract-address="0x0000000000000000000000000000000000008888"
-permissions-nodes-contract-address="0x0000000000000000000000000000000000009999"
+#permissions-accounts-config-file-enabled=true
+#permissions-nodes-config-file-enabled=true
+#permissions-accounts-contract-enabled=true
+#permissions-nodes-contract-enabled=true
+#permissions-accounts-contract-address="0x0000000000000000000000000000000000008888"
+#permissions-nodes-contract-address="0x0000000000000000000000000000000000009999"
