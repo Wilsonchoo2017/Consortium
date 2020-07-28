@@ -80,8 +80,8 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        var tenant = $('#tenant-add').val();
-        var owneradd = $('#owner-add').val();
+        var tenant = $('#tenant-addr').val();
+        var owneradd = $('#owner-addr').val();
         var rent = parseInt($('#rent').val());
         var duration = parseInt($('#duration').val());
         var bond = parseInt($('#bond').val());
@@ -99,13 +99,10 @@ App = {
         // propose lease as manager
         if (owneradd != ''){
           console.log('propose as manager');
-          // proposeLeaseAsManager(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks, address _ownerAddress) public returns (uint proposalId) {
-          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond, {from: account});
+          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond,owner, {from: account});
         }
         console.log('propose as owner');
         // propose lease as owner
-        //proposeLeaseAsOwner(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks) public returns (uint proposalId) {
-
         return tenancyInstance.proposeLeaseAsOwner(tenant, rent,periodic, duration, hd, bond, {from: account});
       }).then(function(result) {
         alert('create lease contract success');
@@ -251,10 +248,14 @@ App = {
 
         return leaseInstance.viewLeaseProposal.call();
       }).then(function(result) {
-        $("#view-rent-price").text(result['c'][0]);
-        $("#view-rent-price").text(result['c'][0]);
-
-        console.log(result['c'][0]);
+        $("#view-rent-price").text(result[0]['c'][0]);
+        $("#view-periodic").text(result[1]);
+        $("#view-duration").text(result[2]['c'][0]);
+        $("#view-manager").text(result[3]);
+        $("#view-owner").text(result[4]);
+        $("#view-deposit").text(result[5]);
+        $("#view-bond").text(result[6]['c'][0]);
+        console.log(result);
       }).catch(function(err) {
         console.log(err.message);
       });
