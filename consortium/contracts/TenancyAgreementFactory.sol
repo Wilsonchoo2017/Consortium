@@ -155,6 +155,7 @@ contract TenancyAgreementFactory {
         require (msg.sender == cp.primaryTenant, "You are not allowed to negotiate the price");
         require (cp.isValid == true, "Lease is already under negotiation");
         tenancyProposals[msg.sender].rentPerWeek = newRent;
+        tenancyProposals[msg.sender].isValid = false;
     }
 
     function negotiatePriceManagerOwner(address tenantAddress, uint newRent) public {
