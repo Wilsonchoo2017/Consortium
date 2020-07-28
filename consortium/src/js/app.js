@@ -119,7 +119,7 @@ App = {
         // propose lease as manager
         if (owneradd != ''){
           console.log('propose as manager');
-          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond,owner, {from: account});
+          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond,owneradd, {from: account});
         }
         console.log('propose as owner');
         // propose lease as owner
@@ -239,7 +239,7 @@ App = {
       var account = accounts[0];
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        var tenant = parseInt($('#approve-tenant').val());
+        var tenant = $('#approve-tenant').val();
         console.log(account);
         // nego as tenant
         return tenancyInstance.ownerApproveLease(tenant, {from: account});
@@ -268,8 +268,9 @@ App = {
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
         var negoPrice = parseInt($('#negotiate-price').val());
-        var tenantAdd = parseInt($('#tenant-nego-address').val());
+        var tenantAdd = $('#tenant-nego-address').val();
         console.log(account);
+        console.log(tenantAdd);
         // nego as tenant
         if (event.target.id == "negotiate-tenant-btn"){
           return tenancyInstance.negotiatePriceTenant(negoPrice, {from: account});
@@ -300,7 +301,6 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        var rentTenant = parseInt($('#rent-tenant').val());
         var rentPrice = parseInt($('#rent-price').val());
         console.log(account);
         return tenancyInstance.payRent(rentPrice, {from: account});
