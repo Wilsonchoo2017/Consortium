@@ -44,6 +44,7 @@ contract ERC20 is Context, IERC20 {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
+    address tokenManager;
 
     /**
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
@@ -58,6 +59,7 @@ contract ERC20 is Context, IERC20 {
         _name = name;
         _symbol = symbol;
         _decimals = 18;
+        tokenManager = msg.sender;
     }
 
     /**
@@ -73,6 +75,11 @@ contract ERC20 is Context, IERC20 {
      */
     function symbol() public view returns (string memory) {
         return _symbol;
+    }
+    
+    function changeManager(address newManager) public {
+        require (msg.sender == tokenManager, "Only the tokenManager can change manager");
+        tokenManager = newManager;
     }
 
     /**
@@ -216,6 +223,17 @@ contract ERC20 is Context, IERC20 {
         _balances[recipient] = _balances[recipient].add(amount);
         emit Transfer(sender, recipient, amount);
     }
+    
+    
+    function mint(uint256 amount) public {
+        require (msg.sender == tokenManager, "You are not allowed to mint");
+        _mint(tokenManager, amount);
+    }
+    
+    // function mintFrom(address currUser, uint256 amount) public {
+    //     require (currUser == tokenManager, "You are not allowed to mint");
+    //     _mint(currUser, amount);
+    // }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.

@@ -1,9 +1,3 @@
-// var Adoption = artifacts.require("Adoption");
-//
-// module.exports = function(deployer) {
-//   deployer.deploy(Adoption);
-// };
-
 var TenancyAgreementFactory = artifacts.require("TenancyAgreementFactory");
 
 module.exports = function(deployer) {
