@@ -33,10 +33,6 @@ App = {
     // write to new file
     var obj = {
       "data" : [
-        {
-          name: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
-          balance: 9000000000
-        }
       ]
     }
     localStorage.setItem('bankStorage', JSON.stringify(obj));
@@ -53,8 +49,18 @@ App = {
       // Set the provider for our contract
       App.contracts.TenancyAgreementFactory.setProvider(App.web3Provider);
 
+
     });
 
+    $.getJSON('ERC20.json', function(data) {
+      // Get the necessary contract artifact file aznd instantiate it with truffle-contract
+      var ERC20Artifact = data;
+      App.contracts.ERC20 = TruffleContract(ERC20Artifact);
+
+      // Set the provider for our contract
+      App.contracts.ERC20.setProvider(App.web3Provider);
+
+    });
     return App.bindEvents();
   },
 
@@ -67,6 +73,7 @@ App = {
     $(document).on('click', '#manager', App.showOwnerAdd);
     $(document).on('click', '#view-btn', App.getLease);
     $(document).on('click', '#bond-btn', App.getBond);
+    $(document).on('click', '#mint', App.mint);
 
 
     console.log('binding');
@@ -121,65 +128,89 @@ App = {
   insertDatabase: function(tenantName, balance, pmName) {
     return new Promise(_resolve => {
       // wait for file lock 
-      while (filelock == true) {
+      while (App.filelock == true) {
       }
       // a single check is fine as JS is single threaded
-      filelock = true; // lock for following process
+      App.filelock = true; // lock for following process
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      var data = {
+        id : obj.data.length + 1,
+        name : tenantName,
+        balance : balance,
+        status: unpaid
+      };
+      obj['data'].push(tenantData);
+      // save to local storage
+      localStorage.setItem('bankStorage', JSON.stringify(obj));
+      // done work and unlock lock
+      App.filelock = false;
+      return true;
+    });
+  },
+
+  UpdateDatabase: function(id, tenantName, balance) {
+    return new Promise(_resolve => {
+      // wait for file lock 
+      while (App.filelock == true) {
+      }
+      // a single check is fine as JS is single threaded
+      App.filelock = true; // lock for following process
       var obj = JSON.parse(localStorage.getItem('bankStorage'));
       // find user, assume name as key
       var dataArray = obj.data;
       // do a linear search
-      function findId(data, nameToLookFor, balance) {
+      function findId(data, id, balance) {
         var categoryArray = data.data;
         for (var i = 0; i < categoryArray.length; i++) {
-            if (categoryArray[i].name == nameToLookFor) {
-              categoryArray[i].balance = categoryArray[i].balance - balance;
+            if (categoryArray[i].id == id) {
+              categoryArray[i].status = paid;
               return true; 
             }
         }
         // item not found
         return false;
       }
-      if (findId(obj, tenantName, balance) == 0) {
-        // no tenant data, append to obj instead
-        var tenantData = {
-          name : tenantName,
-          balance : -balance
-        };
-        obj['data'].push(tenantData);
-      }
-      if (findId(obj, pmName, balance) == 0 ){
-        // no pm data, append to obj instead
-        var pmData = {
-          name : tenantName,
-          balance : -balance
-        };
-        obj['data'].push(pmData);
-      }
 
       // save to local storage
       localStorage.setItem('bankStorage', JSON.stringify(obj));
       // done work and unlock lock
-      filelock = false;
+      App.filelock = false;
+      return true;
     });
   },
+
   // Transfer ERC20 token to tenant
-  payPropertyManager: async function(tenantAddr, payAmount, pmAddr) {
-    // call truffle SC to pay ERC20 token to current user. 
-    App.contracts.ERC20.deployed().then(function(instance) {
-      ERC20Instance = instance;
-      return ERC20Instance.mint(pmAddr, tenantAddr, payAmount);
-    }).then(function(result) {
-      console.log('handle success');
-      // insert transaction into a json file. 
-      const result = await insertDatabase(tenantAddr, payAmount, pmAddr);
-      console.log(result);
-    }).catch(function(err) {
-      console.log('handle fail');
-      console.log(err.message);
+  mint: function() {
+    // These variables are from a form
+    var payAmount = 200;
+    var tenantAccount = "0x627306090abaB3A6e1400e9345bC60c78a8BEf57"
+
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+
+      // call truffle SC to pay ERC20 token to current user. 
+      App.contracts.ERC20.deployed().then(function(instance) {
+        ERC20Instance = instance;
+        return ERC20Instance.mint(payAmount, {from: account});
+      }).then(async function(result) {
+        console.log('handle success');
+        // insert transaction into a json file. 
+        const result_database = await App.insertDatabase(tenantAccount, payAmount, account);
+        console.log(result);
+        return ERC20Instance.transfer(tenantAccount, payAmount, {from: account});
+      }).then(function(result) {
+        console.log(result);
+      })
+      .catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
     });
   },
-  
+
   showTenantForm: function(event) {
       $("#tenant-form").css("display", "block");
       $("#owner-form").css("display", "none");
