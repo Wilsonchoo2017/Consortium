@@ -46,6 +46,37 @@ $('.addTenantToNetworkButton').click(function() {
     });
 });
 
+$('.checkTenantExistInNetworkButton').click(function(addr) {
+
+  //Send the AJAX call to the server
+    $.ajax({
+    //The URL to process the request
+      url : 'http://127.0.0.1:8545',
+    //The type of request, also known as the "method" in HTML forms
+    //Can be 'GET' or 'POST'
+      type : 'POST',
+      dataType: 'json',
+    //Any post-data/get-data parameters
+    //This is optional
+      data : JSON.stringify({ "jsonrpc" : "2.0", "method" : "perm_getAccountsWhitelist", "params": [], "id": 53 }),
+    //The response from the server
+      'success' : function(data) {
+      //You can use any jQuery/JavaScript here!!!
+          returnList = data.result
+          if(returnList.indexOf(currentAccount) >= 0) {
+            // return true stuff
+            console.log(true)
+          } else {
+            // return false stuff
+            console.log(false)
+          }
+      },
+      'error ': function (request, status, error) {
+          alert(request.responseText);
+      }
+  });
+});
+
 
 let currentAccount = null;
 ethereum
