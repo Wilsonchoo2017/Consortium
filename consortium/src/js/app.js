@@ -29,7 +29,7 @@ App = {
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
     }
     web3 = new Web3(App.web3Provider);
-    
+
     // write to new file
     var obj = {
       "data" : [
@@ -75,7 +75,8 @@ App = {
     $(document).on('click', '#sign-btn', App.signLease);
     $(document).on('click', '#view-btn', App.getLease);
     $(document).on('click', '#bond-btn', App.getBond);
-    $(document).on('click', '#mint', App.mint);
+    $(document).on('click', '#mint-btn', App.mint);
+    $(document).on('click', '#pay-pm-btn', App.payPropertyManager);
 
 
     console.log('binding');
@@ -147,9 +148,9 @@ App = {
         id : obj.data.length + 1,
         name : tenantName,
         balance : balance,
-        status: unpaid
+        status: "unpaid"
       };
-      obj['data'].push(tenantData);
+      obj['data'].push(data);
       // save to local storage
       localStorage.setItem('bankStorage', JSON.stringify(obj));
       // done work and unlock lock
@@ -173,8 +174,15 @@ App = {
         var categoryArray = data.data;
         for (var i = 0; i < categoryArray.length; i++) {
             if (categoryArray[i].id == id) {
-              categoryArray[i].status = paid;
-              return true; 
+              categoryArray[i].status = "paid";
+              ERC20Instance.transfer(tenantAccount, payAmount, {from: account}).then(function(result) {
+                console.log(result);
+                return true; 
+              }).catch(function(err) {
+                console.log('handle fail');
+                console.log(err.message);
+              });
+              return true
             }
         }
         // item not found
@@ -190,35 +198,25 @@ App = {
   },
 
   // Transfer ERC20 token to tenant
-  mint: function() {
+  payPropertyManager: function() {
+    
     // These variables are from a form
     var payAmount = 200;
-    var tenantAccount = "0x627306090abaB3A6e1400e9345bC60c78a8BEf57"
+    var propertyManagerAccount = "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"
 
-    web3.eth.getAccounts(function(error, accounts) {
+    web3.eth.getAccounts(async function(error, accounts) {
       if (error) {
         console.log(error);
       }
       var account = accounts[0];
-
-      // call truffle SC to pay ERC20 token to current user. 
-      App.contracts.ERC20.deployed().then(function(instance) {
-        ERC20Instance = instance;
-        return ERC20Instance.mint(payAmount, {from: account});
-      }).then(async function(result) {
-        console.log('handle success');
-        // insert transaction into a json file. 
-        const result_database = await App.insertDatabase(tenantAccount, payAmount, account);
-        console.log(result);
-        return ERC20Instance.transfer(tenantAccount, payAmount, {from: account});
-      }).then(function(result) {
-        console.log(result);
-      })
-      .catch(function(err) {
-        console.log('handle fail');
-        console.log(err.message);
-      });
+      const result_database = await App.insertDatabase(account, payAmount, propertyManagerAccount);
+      console.log(result_database)
+      return result_database;
     });
+  },
+
+  mint: function() {
+    return true;
   },
 
   showTenantForm: function(event) {
