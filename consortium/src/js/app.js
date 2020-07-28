@@ -66,11 +66,13 @@ App = {
 
   bindEvents: function() {
     $(document).on('click', '#create-btn', App.handleContract);
+    $(document).on('click', '#approve-btn', App.approve);
     $(document).on('click', '#pay-btn', App.payRent);
     $(document).on('click', '#tenant-btn', App.showTenantForm);
     $(document).on('click', '.owner', App.showOwnerForm);
     $(document).on('click', '.nego', App.negotiate);
     $(document).on('click', '#manager', App.showOwnerAdd);
+    $(document).on('click', '#sign-btn', App.signLease);
     $(document).on('click', '#view-btn', App.getLease);
     $(document).on('click', '#bond-btn', App.getBond);
     $(document).on('click', '#mint', App.mint);
@@ -110,11 +112,19 @@ App = {
         if ($("#holding-deposit :selected").val() == "yes"){
           hd = true;
         }
+        console.log(account);
+        console.log(tenant);
+        console.log(owneradd);
         // propose lease as manager
-        if (owneradd){
-          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond,owner, {from: account});
+        if (owneradd != ''){
+          console.log('propose as manager');
+          // proposeLeaseAsManager(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks, address _ownerAddress) public returns (uint proposalId) {
+          return tenancyInstance.proposeLeaseAsManager(tenant, rent,periodic, duration, hd, bond, {from: account});
         }
+        console.log('propose as owner');
         // propose lease as owner
+        //proposeLeaseAsOwner(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks) public returns (uint proposalId) {
+
         return tenancyInstance.proposeLeaseAsOwner(tenant, rent,periodic, duration, hd, bond, {from: account});
       }).then(function(result) {
         alert('create lease contract success');
@@ -221,6 +231,33 @@ App = {
      $("#tenant-form").css("display", "none");
   },
   // handle negotiation
+  approve: function(event) {
+    event.preventDefault();
+    console.log('approving');
+    var tenancyInstance;
+
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+
+      var account = accounts[0];
+      App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
+        tenancyInstance = instance;
+        var tenant = parseInt($('#approve-tenant').val());
+        console.log(account);
+        // nego as tenant
+        return tenancyInstance.ownerApproveLease(tenant, {from: account});
+      }).then(function(result) {
+        alert('approve success');
+      }).catch(function(err) {
+        console.log('approve fail');
+        console.log(err.message);
+      });
+    });
+  },
+
+  // handle negotiation
   negotiate: function(event) {
     event.preventDefault();
     console.log('negotiating');
@@ -318,9 +355,11 @@ App = {
         leaseInstance = instance;
 
         return leaseInstance.viewLeaseProposal.call();
-      }).then(function(rentPerWeek, periodicLease, leaseDuration, managerAddress, ownerAddress, holdingDeposit, rentalBondInWeeks) {
-        console.log(rentPerWeek);
-        console.log(periodicLease);
+      }).then(function(result) {
+        $("#view-rent-price").text(result['c'][0]);
+        $("#view-rent-price").text(result['c'][0]);
+
+        console.log(result['c'][0]);
       }).catch(function(err) {
         console.log(err.message);
       });
