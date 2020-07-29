@@ -70,7 +70,8 @@ App = {
 
     $(document).on('click', '#mint-btn', App.mint);
     $(document).on('click', '#pay-pm-btn', App.payPropertyManager);
-    $(document).on('click', '#app-tx-btn', App.transferAndApprove);
+    $(document).on('click', '#tx-btn', App.transferToken);
+    $(document).on('click', '#appr-btn', App.approveToken);
     
     console.log('binding');
   },
@@ -238,7 +239,7 @@ App = {
 
   },
 
-  transferAndApprove: function () {
+  transferToken: function () {
     web3.eth.getAccounts(async function(error, accounts) {
       if (error) {
         console.log(error);
@@ -265,7 +266,7 @@ App = {
         data = findId(obj); 
         App.contracts.ERC20.deployed()
         .then(ERC20Instance.transfer(data.tenantAddr, data.balance, {from: account}))
-        .then(ERC20Instance.approve(data.tenantAddr, data.balance, {from: account}))
+      
 
       }).catch(function(err) {
         console.log('handle fail');
@@ -274,6 +275,40 @@ App = {
     });
   },
 
+  approveToken: function () {
+    web3.eth.getAccounts(async function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      var id = $('#tx').val();
+      var account = accounts[0];
+      App.contracts.ERC20.deployed().then(function(instance) {
+        var ERC20Instance = instance;
+        
+        function findId(obj) {
+          var categoryArray = obj.data;
+          for (var i = 0; i < categoryArray.length; i++) {
+            console.log("Heyf")
+            if (categoryArray[i].id == id) {
+              console.log("Found stuff")
+              console.log(categoryArray[i])
+              return categoryArray[i];
+  
+            }
+          }
+        }
+
+        data = findId(obj); 
+        App.contracts.ERC20.deployed()
+        .then(ERC20Instance.approve(data.tenantAddr, data.balance, {from: account}))
+
+      }).catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
+    });
+  },
 
   showTenantForm: function(event) {
       $("#tenant-form").css("display", "block");
