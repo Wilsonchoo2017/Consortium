@@ -43,6 +43,16 @@ App = {
 
     });
 
+    $.getJSON('ERC20.json', function(data) {
+      // Get the necessary contract artifact file and instantiate it with truffle-contract
+      var ERC20Artifact = data;
+      App.contracts.ERC20 = TruffleContract(ERC20Artifact);
+
+      // Set the provider for our contract
+      App.contracts.ERC20.setProvider(App.web3Provider);
+
+    });
+
     return App.bindEvents();
   },
 
@@ -164,15 +174,18 @@ App = {
 
       App.contracts.TenancyAgreementFactory.deployed().then(function(instance) {
         tenancyInstance = instance;
-        var negoPrice = parseInt($('#negotiate-price').val());
+        var negotPrice = parseInt($('#negotiate-tprice').val());
+        var negomPrice = parseInt($('#negotiate-mprice').val());
         var tenantAdd = $('#tenant-nego-address').val();
         console.log(account);
         console.log(tenantAdd);
         // nego as tenant
         if (event.target.id == "negotiate-tenant-btn"){
-          return tenancyInstance.negotiatePriceTenant(negoPrice, {from: account});
+          console.log('nego as tenant');
+          return tenancyInstance.negotiatePriceTenant(negotPrice, {from: account});
         } else {
-          return tenancyInstance.negotiatePriceManagerOwner(tenantAdd,negoPrice, {from: account});
+          console.log('nego as owner/manager');
+          return tenancyInstance.negotiatePriceManagerOwner(tenantAdd,negomPrice, {from: account});
         }
       }).then(function(result) {
         alert('nego success');
