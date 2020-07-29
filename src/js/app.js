@@ -148,7 +148,7 @@ App = {
       var data = {
         id : obj.data.length + 1,
         tenantAddr : tenantName,
-        balance : balance,
+        balance : parseInt(balance),
         propertyManager : pmName,
         status: "unpaid"
       };
@@ -162,7 +162,7 @@ App = {
   },
 
   UpdateDatabase: function(id, account) {
-    return new Promise(_resolve => {
+    
       // wait for file lock 
       while (App.filelock == true) {
       }
@@ -187,22 +187,22 @@ App = {
       }
       App.contracts.ERC20.deployed().then(function(instance) {
         var ERC20Instance = instance;
-        data = findId(obj);
+        var data = findId(obj);
         data.status = 'paid';
-        return ERC20Instance.mint(data.balance, {from: account})
+        var balance = parseInt(data.balance);
+        console.log(balance);
+        return ERC20Instance.mint(balance, {from: account});
       }).catch(function(err) {
         console.log('handle fail');
         console.log(err.message);
       });
-
-      
       
       // save to local storage
       localStorage.setItem('bankStorage', JSON.stringify(obj));
       // done work and unlock lock
       App.filelock = false;
       return true;
-    }); 
+    
   },
 
   // Transfer ERC20 token to tenant
@@ -223,16 +223,16 @@ App = {
     });
   },
 
-  mint: async function() {
+  mint:  function() {
     var id = $('#tx').val();
     console.log(id)
     console.log("Minting")
-    web3.eth.getAccounts(async function(error, accounts) {
+    web3.eth.getAccounts( function(error, accounts) {
       if (error) {
         console.log(error);
       }
       var account = accounts[0];
-      const result_database = await App.UpdateDatabase(id, account);
+      const result_database = App.UpdateDatabase(id, account);
       console.log(result_database)
       return result_database;
     });
@@ -263,10 +263,10 @@ App = {
           }
         }
 
-        data = findId(obj); 
+        var data = findId(obj); 
+        var balance = parseInt(data.balance);
         App.contracts.ERC20.deployed()
-        .then(ERC20Instance.transfer(data.tenantAddr, data.balance, {from: account}))
-      
+        .then(ERC20Instance.transfer(data.tenantAddr, balance, {from: account}))
 
       }).catch(function(err) {
         console.log('handle fail');
@@ -300,8 +300,9 @@ App = {
         }
 
         data = findId(obj); 
+        var balance = parseInt(data.balance);
         App.contracts.ERC20.deployed()
-        .then(ERC20Instance.approve(data.tenantAddr, data.balance, {from: account}))
+        .then(ERC20Instance.approve(ERC20Instance.address, balance, {from: account}))
 
       }).catch(function(err) {
         console.log('handle fail');
