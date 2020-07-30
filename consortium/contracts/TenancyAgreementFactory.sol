@@ -1,74 +1,55 @@
 pragma solidity ^0.6.0;
 
+// import "./SafeMath.sol";
 import "./TenancyAgreement.sol";
 import "./ERC20.sol";
 
 
-//https://www.fairtrading.nsw.gov.au/housing-and-property/renting/starting-a-tenancy#what
 
 contract TenancyAgreementFactory {
     
-    string tenantInformationStatement = "https://www.fairtrading.nsw.gov.au/__data/assets/pdf_file/0009/608382/Tenant-information-statement.pdf";
-    
-    struct PropertyManager {
-        uint licenseNumber;
-        address managerAddress;
-    }
-    
-    struct PropertyOwner {
-        bool exists;
-        address propertyOwnerAddress;
-    }
-    
-    // struct DisclosedPropertyDetails {
-    //     bool plannedToBeSold; //Is the property planned to be sold
-    //     bool subjectToCourtAction; // Is the property subject to court action where the mortgagee is trying to take possession of the property
-    //     bool isStrataScheme; //Is the property in a strata scheme and a strata renewal committee is currently established for the strata scheme.
-    //     bool affectedByNature; //Property has been affected by flooding from a natural weather event or bushfire in the last five years.
-    //     bool significantHealthOrSafety; //Property has significant health or safety risks that would not be apparent to the tenant.
-    //     bool sceneOfCrime; //Property has been the scene of a serious violent crime (e.g. murder or aggravated assault) in the last five years
-    //     bool asbestosRegister; //Property is listed on the loose-fill asbestos insulation register
-    //     bool drugManufactured; //Property has been used to manufacture or cultivate a prohibited drug or prohibited plant in the last two years
-    //     bool fireSafetyIssues; //Property is part of a building where a fire safety or building product rectification order (or a notice of intention to issue one of these orders) has been issued for external combustible cladding
-    //     bool parkingZoningIssues; //Property is affected by zoning or laws that will not allow a tenant to obtain a parking permit, and only paid parking is available in the area
-    //     bool differentWasteServices; //Property is provided with any council waste services that are different to other properties in the council area
-    //     bool sharedDriveWalkway; //Property has a driveway or walkway that others can legally use.
-        
-    // }
-    
+
+
+    //This defines the state of a Tenancy Proposal
     struct TenancyProposal {
         uint rentPerWeek; // e.g. $300
-        bool periodicLease; //Lease with no set enddate
-        uint leaseDuration; //e.g. 5 months // set to 0 if periodic
-        address primaryTenant; //e.g. 0x0weosjqwoeij231
-        address managerAddress;
-        address ownerAddress;
+        bool periodicLease; //Lease with no set end date
+        uint leaseDuration; //e.g. 5 months
+        address primaryTenant;  //Address of the Primary Tenant
+        address managerAddress; // Address of the Manager
+        address ownerAddress; // Address of the Owner
         bool holdingDeposit; //1 week of rent for holding
-        uint disclosedDetails;
+        uint disclosedDetails; // Ignore: Extension Feature
         uint rentalBondInWeeks; // e.g. 4 weeks of rent
-        bool accepted;
-        bool ownerApproved;
-        bool isValid;
+        bool accepted; // Has the TenancyProposal already been accepted
+        bool ownerApproved; // Has the Owner approved the lease proposal
+        bool isValid; // Is the TenancyProposal in a non-negotiation state
     }
+
+    // Stores the details of the creator of the contract
+    address contractOwner;
+    uint public contractOwnerLicenseNumber;
     
-    PropertyManager public owningPropertyManager;
+    // Address of the ERC20 Token Smart Contract
     address public tokenAddress;
-    // Mapping from tenant address to Agreement
+    // Mapping from tenant address to TenancyAgreement
     mapping (address => address) public tenancyAgreements;
     uint currentProposalId = 0;
+    // Mapping from tenant address to TenancyProposal
     mapping (address => TenancyProposal) public tenancyProposals; //TenancyProposals by tenant
-    // mapping (uint => DisclosedPropertyDetails) public disclosedPropertyDetails;
-    mapping (address => uint) public balances;
+
+    //State of the ERC20 Contract
     ERC20 ercContract;
 
-    // Creates a new lunch venue contract
+    //Creates an instance of the TenancyAgreementFactory
     constructor(uint _licenseNumber, address _tokenAddress) public {
-        PropertyManager memory newPropertyManager = PropertyManager({licenseNumber: _licenseNumber, managerAddress: msg.sender});
-        owningPropertyManager = newPropertyManager;
         tokenAddress = _tokenAddress;
         ercContract = ERC20(tokenAddress);
+        contractOwner = msg.sender;
+        contractOwnerLicenseNumber = _licenseNumber;
     }
     
+    //Propose a lease to a tenant as the owner
     function proposeLeaseAsOwner(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks) public returns (uint proposalId) {
         require (_rentalBondInWeeks <= 4, "Rental Bond cannot be more than 4 weeks for rent");
         TenancyProposal memory newTenancyProposal = TenancyProposal({
@@ -91,6 +72,7 @@ contract TenancyAgreementFactory {
         return currentProposalId-1;
     }
     
+    //View the leaseProposal as a tenant
     function viewLeaseProposal() public view returns (uint rentPerWeek, bool periodicLease, uint leaseDuration, 
                                                 address managerAddress, address ownerAddress, bool holdingDeposit, uint rentalBondInWeeks) {
         require (tenancyProposals[msg.sender].primaryTenant == msg.sender, "User does not have any active lease proposals!");
@@ -98,6 +80,15 @@ contract TenancyAgreementFactory {
         return (tp.rentPerWeek, tp.periodicLease, tp.leaseDuration, tp.managerAddress, tp.ownerAddress, tp.holdingDeposit, tp.rentalBondInWeeks);
     }
     
+    //View the leaseProposal as anyone other than the tenant
+    function viewLeaseProposalOther(address tenantAddress) public view returns (uint rentPerWeek, bool periodicLease, uint leaseDuration, 
+                                                address managerAddress, address ownerAddress, bool holdingDeposit, uint rentalBondInWeeks) {
+        require (tenancyProposals[tenantAddress].primaryTenant == tenantAddress, "Given user does not have any active lease proposals!");
+        TenancyProposal memory tp = tenancyProposals[tenantAddress];
+        return (tp.rentPerWeek, tp.periodicLease, tp.leaseDuration, tp.managerAddress, tp.ownerAddress, tp.holdingDeposit, tp.rentalBondInWeeks);
+    }
+    
+    //Propose a lease as a Manager
     function proposeLeaseAsManager(address _tenant, uint _rentPerWeek, bool _periodicLease, uint _leaseDuration, bool _holdingDeposit, uint _rentalBondInWeeks, address _ownerAddress) public returns (uint proposalId) {
         require (_rentalBondInWeeks <= 4, "Rental Bond cannot be more than 4 weeks for rent");
         TenancyProposal memory newTenancyProposal = TenancyProposal({
@@ -120,6 +111,7 @@ contract TenancyAgreementFactory {
         return currentProposalId-1;
     }
     
+    //Check the amount of rent owed as a tenant
     function getAmountOwedTenant() public view returns (uint amountOwed){
         address taAddr = tenancyAgreements[msg.sender];
         require (taAddr != address(0), "User does not have an active tenancyAgreement");
@@ -127,35 +119,29 @@ contract TenancyAgreementFactory {
         return ta.getAmountOwed();
     }
     
-    
+    //Reject the lease as a tenant
     function rejectLease() public {
+        require (tenancyProposals[msg.sender].accepted == false, "This tenancy has already been accepted");
         tenancyProposals[msg.sender].primaryTenant = address(0);
     }
     
+    //Approve of a manager proposed lease, as the owner
     function ownerApproveLease(address _tenantAddress) public {
         TenancyProposal memory cp = tenancyProposals[_tenantAddress];
         require (msg.sender == cp.ownerAddress, "You are not the owner!");
         tenancyProposals[_tenantAddress].ownerApproved = true;
     }
     
-    // @Rez - Extension 
-    // function disclosePropertyDetails(uint proposalId, bool _plannedToBeSold, bool _subjectToCourtAction, bool _isStrataScheme, bool _affectedByNature, bool _significantHealthOrSafety,
-    //                                  bool _sceneOfCrime, bool _asbestosRegiser, bool _drugManufactured, bool _fireSafetyIssues, bool _parkingZoningIssues, bool _differentWasteServices,
-    //                                  bool _sharedDriveWalkway) public {
-    //     //TODO
-    //     // TenancyProposal memory currProp = tenancyProposals[proposalId];
-        
-                                         
-    // }
-    
-
+    //Negotiate the price as a Tenant
     function negotiatePriceTenant(uint newRent) public {
         TenancyProposal memory cp = tenancyProposals[msg.sender];
         require (msg.sender == cp.primaryTenant, "You are not allowed to negotiate the price");
         require (cp.isValid == true, "Lease is already under negotiation");
         tenancyProposals[msg.sender].rentPerWeek = newRent;
+        tenancyProposals[msg.sender].isValid = false;
     }
     
+    //Negotiate the price as a Manager or Owner
     function negotiatePriceManagerOwner(address tenantAddress, uint newRent) public {
         TenancyProposal memory cp = tenancyProposals[tenantAddress];
         require (msg.sender == cp.managerAddress || msg.sender == cp.ownerAddress, "You are not allowed to negotiate price!");
@@ -164,18 +150,8 @@ contract TenancyAgreementFactory {
     }
     
     
-    function payRent(uint amount) public returns (bool success){
-        address taAddr = tenancyAgreements[msg.sender];
-        require (taAddr != address(0), "User does not have an active tenancyAgreement");
-        TenancyAgreement ta = TenancyAgreement(taAddr);
-        ta.payRent(msg.sender, amount);
-        ercContract.transferFrom(msg.sender, ta.getHomeOwner(), amount);
-        return true;
-    }
-    
+    //Accept the Lease as a Tenant
     function acceptLease() public returns (TenancyAgreement leaseAgreementAddress) {
-        // TenancyProposal memory newTenancyProposal
-        //TODO
         TenancyProposal memory cp = tenancyProposals[msg.sender];
         require (msg.sender == cp.primaryTenant, "You are not allowed to accept this lease");
         require (cp.accepted == false, "Tenancy agreement has already been accepted");
@@ -189,17 +165,29 @@ contract TenancyAgreementFactory {
         if (cp.holdingDeposit == true) {
             weeksOfRentPayable+=1;
         }
-        uint amountPayable = weeksOfRentPayable*cp.rentPerWeek;
+        uint amountPayable = SafeMath.mul(weeksOfRentPayable,cp.rentPerWeek);
         bool isSuccess = ercContract.transferFrom(msg.sender, address(this), amountPayable);
         require(isSuccess == true, "Transfer Balance failed");
         return newTenancyAgreement;
     }
+
+    //Pay the Rent as a Tenant
+    function payRent(uint amount) public returns (bool success){
+        address taAddr = tenancyAgreements[msg.sender];
+        require (taAddr != address(0), "User does not have an active tenancyAgreement");
+        TenancyAgreement ta = TenancyAgreement(taAddr);
+        ta.payRent(msg.sender, amount);
+        ercContract.transferFrom(msg.sender, ta.getHomeOwner(), amount);
+        return true;
+    }
     
+    //Propose Lease Extension as a Manager or Owner
     function proposeLeaseExtension(address tenancyAddress, uint additionalWeeks) public {
         TenancyAgreement ta = TenancyAgreement(tenancyAddress);
         ta.proposeLeaseExtension(msg.sender, additionalWeeks);
     }
     
+    //Accept Lease Extension as a Tenant
     function acceptLeaseExtension() public {
         address taAddr = tenancyAgreements[msg.sender];
         require (taAddr != address(0), "User does not have an active tenancyAgreement");
@@ -207,10 +195,12 @@ contract TenancyAgreementFactory {
         ta.acceptLeaseExtension(msg.sender);
     }
     
+    //Get the address of the Token Contract
     function getTokenContract() public view returns (address){
         return tokenAddress;
     }
     
+    //Retrieve Bond as the Primary Tenant
     function retrieveBond() public {
         address taAddr = tenancyAgreements[msg.sender];
         require (taAddr != address(0), "User does not have an active tenancyAgreement");
@@ -220,13 +210,13 @@ contract TenancyAgreementFactory {
         require (isSuccess == true, "Failed to transfer bond to user");
     }
  
- 
+    //Change the Rent as a Manager or Owner
     function changeRent(address tenancyAddress, uint newRent) public {
         TenancyAgreement ta = TenancyAgreement(tenancyAddress);
         bool isSuccess = ta.changeRent(msg.sender, newRent);
         require(isSuccess == true, "Failed to Change rent");
     }
-    //Duration is in weeks;
+    //Invite a secondary tenant as the Primary Tenant
     function proposeAddSecondaryTenant(address newTenant, uint newTenantRent, uint newTenantDuration) public {
         address taAddr = tenancyAgreements[msg.sender];
         require (taAddr != address(0), "User does not have an active tenancyAgreement");
@@ -234,19 +224,34 @@ contract TenancyAgreementFactory {
         ta.proposeAddTenant(msg.sender, newTenant, newTenantRent, newTenantDuration);
     }
     
+    //Accept an invitation as the secondary tenant
     function acceptAddSecondaryTenant(address tenancyAddress) public {
         TenancyAgreement ta = TenancyAgreement(tenancyAddress);
         ta.acceptAddTenant(msg.sender);
     }
     
-    function payRentSecondaryTenant(address tenancyAddress) public {
-        //TODO
+    //Pay rent as the secondary tenant, which goes to the primary tenant
+    function payRentSecondaryTenant(address tenancyAddress, uint amount) public {
+       address taAddr = tenancyAgreements[tenancyAddress];
+        require (taAddr != address(0), "User does not have an active tenancyAgreement");
+        TenancyAgreement ta = TenancyAgreement(taAddr);
+        ta.payRentSecondaryTenant(msg.sender, amount);
+        ercContract.transferFrom(msg.sender, ta.getPrimaryTenant(), amount);
     }
     
-    modifier restricted() { // Only manager can do
-        require (msg.sender == owningPropertyManager.managerAddress, "Can only be executed by the factory manager");
-        _;
+    //Change the ERC20 token being used as the owner of the factory
+    function changeTokenAddress(address newAddress) public {
+        require (msg.sender == contractOwner, "You are not the owner of the factory");
+        tokenAddress = newAddress;
+        ercContract = ERC20(tokenAddress);
     }
-    
+
+    //Check the amount of rent owed as a tenant
+    function getAmountOwedTenant() public view returns (uint amountOwed){
+        address taAddr = tenancyAgreements[msg.sender];
+        require (taAddr != address(0), "User does not have an active tenancyAgreement");
+        TenancyAgreement ta = TenancyAgreement(taAddr);
+        return ta.getAmountOwed();
+    }
     
 }

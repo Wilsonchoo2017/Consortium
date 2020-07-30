@@ -13,6 +13,7 @@ contract TenancyAgreement {
     address factoryAddress;
     uint timeStart;
     uint totalPaid;
+    bool oracleVerified;
     
     
     mapping (address => SecondaryTenant) secondaryTenants;
@@ -21,6 +22,7 @@ contract TenancyAgreement {
     
     Payment[] public paymentsMade;
     
+    //Represents a Payment, which can be checked for auditing
     struct Payment {
         address user;
         uint amountPayed;
@@ -28,12 +30,13 @@ contract TenancyAgreement {
         address payedTo;
     }
     
+    //The details of a SecondaryTent
     struct SecondaryTenant {
         bool isAccepted;
         uint newTenantRent;
         uint newTenantEndTime;
     }
-    
+    //The state of a LeaseExtensionProposal
     struct LeaseExtensionProposal {
         bool isValid;
         bool accepted;
@@ -53,14 +56,14 @@ contract TenancyAgreement {
         factoryAddress = msg.sender;
         timeStart = now;
     }
-    
+    //Retrieve the rent amount owed from the current time
     function getAmountOwed() public view enforceProxy returns (uint){
         uint totalOverall = ((now - timeStart)/(1 weeks))*rentPerWeek;
         uint totalOwing = totalOverall - totalPaid;
         return totalOwing;
     }
     
-    
+    //Propose a lease extension as a property manager or a property owner
     function proposeLeaseExtension(address currUser, uint additionalWeeks) public enforceProxy {
         require (currUser == managerAddress || currUser == ownerAddress, "Only manager and owner have authority to extend lease");
         require (xtensionProposal.isValid == false, "There already exists a lease extension proposal");
@@ -68,6 +71,7 @@ contract TenancyAgreement {
         xtensionProposal = newProp;
     }
     
+    //Accept a lease extension as the primary tenant
     function acceptLeaseExtension(address currUser) public enforceProxy {
         require (currUser == primaryTenant, "You are not allowed to accept the Lease Extension");
         require (xtensionProposal.isValid == true, "There is no lease extension proposal");
@@ -79,13 +83,13 @@ contract TenancyAgreement {
             leaseEnd = propTimeEnd;
         }
     }
-    //Duration is in weeks
+    //Propose adding a Secondary Tenant
     function proposeAddTenant(address currUser, address newTenant, uint newTenantRent, uint newTenantDuration) public enforceProxy {
         require (currUser == primaryTenant, "Only the primary tenant can add secondary tenants");
         SecondaryTenant memory nT = SecondaryTenant(false, newTenantRent, now + ((newTenantDuration)*1 weeks));
         secondaryTenants[newTenant] = nT;
     }
-    
+    //As a secondary tenant, accept an invite
     function acceptAddTenant(address currUser) public enforceProxy {
         require (secondaryTenants[currUser].newTenantRent != 0, "There is no proposal for you to join as a secondary tenant");
         secondaryTenants[currUser].isAccepted = true;
@@ -109,7 +113,7 @@ contract TenancyAgreement {
         paymentsMade.push(newPayment);
     }
 
-
+    //Retrieve the bond as the primary tenant
     function retrieveBond(address currUser) public view enforceProxy returns (uint amount){
         require (primaryTenant == currUser, "You are now allowed to retrieve the bond");
         require (now > leaseEnd, "Cannot retrieve the bond before lease ends");
@@ -120,7 +124,7 @@ contract TenancyAgreement {
         return ((rentalBondInWeeks+addWeek)*1 weeks);
     }
     
-    //Limitation, can't increase rent while tenant still has outstanding balance or tenants outstanding will be reset to 0
+    //Change the rent as the property Manager or the property owner
     function changeRent(address currUser, uint newRent) public enforceProxy returns (bool success){
         require (currUser == managerAddress || currUser == ownerAddress, "You are not allowed to increase the rent");
         timeStart = now;
@@ -137,10 +141,14 @@ contract TenancyAgreement {
         return ownerAddress;
     }
     
+    function getPrimaryTenant() public view returns(address primTenant){
+        return primaryTenant;
+    }
+    
     modifier enforceProxy(){
         require (msg.sender == factoryAddress, "Must use factory Proxy");
         _;
     }
-    
+
 
 }
