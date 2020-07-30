@@ -68,6 +68,11 @@ App = {
     $(document).on('click', '#view-btn', App.getLease);
     $(document).on('click', '#bond-btn', App.getBond);
 
+    $(document).on('click', '#mint-btn', App.mint);
+    $(document).on('click', '#pay-pm-btn', App.payPropertyManager);
+    $(document).on('click', '#tx-btn', App.transferToken);
+    $(document).on('click', '#appr-btn', App.approveToken);
+    $(document).on('click', '#show-token-btn', App.showTokenBalance);
 
     console.log('binding');
   },
@@ -120,6 +125,221 @@ App = {
         console.log('handle fail');
         console.log(err.message);
       });
+    });
+  },
+
+  insertDatabase: function(tenantName, balance, pmName) {
+    return new Promise(_resolve => {
+      // wait for file lock
+      while (App.filelock == true) {
+      }
+      // a single check is fine as JS is single threaded
+      App.filelock = true; // lock for following process
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      if (obj === undefined || obj === null) {
+        // write to new file
+        var obj = {
+          "data" : [
+          ]
+        }
+        localStorage.setItem('bankStorage', JSON.stringify(obj));
+        obj = JSON.parse(localStorage.getItem('bankStorage'));
+      }
+
+      var data = {
+        id : obj.data.length + 1,
+        tenantAddr : tenantName,
+        balance : parseInt(balance),
+        propertyManager : pmName,
+        status: "unpaid"
+      };
+      obj['data'].push(data);
+      // save to local storage
+      localStorage.setItem('bankStorage', JSON.stringify(obj));
+      // done work and unlock lock
+      App.filelock = false;
+      return true;
+    });
+  },
+
+  UpdateDatabase: function(id, account) {
+
+      // wait for file lock
+      while (App.filelock == true) {
+      }
+      console.log("Updating stuff")
+      // a single check is fine as JS is single threaded
+      App.filelock = true; // lock for following process
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      // find user, assume name as key
+      // do a linear search
+
+      function findId(obj) {
+        var categoryArray = obj.data;
+        for (var i = 0; i < categoryArray.length; i++) {
+          console.log("Heyf")
+          if (categoryArray[i].id == id) {
+            console.log("Found stuff")
+            console.log(categoryArray[i])
+            return categoryArray[i];
+
+          }
+        }
+      }
+      App.contracts.ERC20.deployed().then(function(instance) {
+        var ERC20Instance = instance;
+        var data = findId(obj);
+        data.status = 'paid';
+        var balance = parseInt(data.balance);
+        console.log(balance);
+        return ERC20Instance.mint(balance, {from: account});
+      }).then(function(result)
+      {
+        alert("mint success!");
+      })
+      .catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
+
+      // save to local storage
+      localStorage.setItem('bankStorage', JSON.stringify(obj));
+      // done work and unlock lock
+      App.filelock = false;
+      return true;
+
+  },
+
+  // Transfer ERC20 token to tenant
+  payPropertyManager: function() {
+
+    // These variables are from a form
+    var payAmount = $('#pay-amount').val();
+    var propertyManagerAccount = "0x627306090abaB3A6e1400e9345bC60c78a8BEf57"
+
+    web3.eth.getAccounts(async function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+      const result_database = await App.insertDatabase(account, payAmount, propertyManagerAccount);
+      alert("pay success");
+      return result_database;
+    });
+  },
+
+  mint:  function() {
+    var id = $('#tx').val();
+    console.log(id)
+    console.log("Minting")
+    web3.eth.getAccounts( function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var account = accounts[0];
+      const result_database = App.UpdateDatabase(id, account);
+      console.log(result_database)
+      return result_database;
+    });
+
+  },
+
+  transferToken: function () {
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      var id = $('#tx').val();
+      var account = accounts[0];
+      App.contracts.ERC20.deployed().then(function(instance) {
+        var ERC20Instance = instance;
+
+        function findId(obj) {
+          var categoryArray = obj.data;
+          for (var i = 0; i < categoryArray.length; i++) {
+            console.log("Heyf")
+            if (categoryArray[i].id == id) {
+              console.log("Found stuff")
+              console.log(categoryArray[i])
+              return categoryArray[i];
+
+            }
+          }
+        }
+
+        var data = findId(obj);
+        var balance = parseInt(data.balance);
+        App.contracts.ERC20.deployed()
+        .then(ERC20Instance.transfer(data.tenantAddr, balance, {from: account}))
+
+      }).catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
+    });
+  },
+
+  approveToken: function () {
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      var obj = JSON.parse(localStorage.getItem('bankStorage'));
+      var id = $('#tx').val();
+      var account = accounts[0];
+      App.contracts.ERC20.deployed().then(function(instance) {
+        var ERC20Instance = instance;
+
+        function findId(obj) {
+          var categoryArray = obj.data;
+          for (var i = 0; i < categoryArray.length; i++) {
+            console.log("Heyf")
+            if (categoryArray[i].id == id) {
+              console.log("Found stuff")
+              console.log(categoryArray[i])
+              return categoryArray[i];
+
+            }
+          }
+        }
+
+        data = findId(obj);
+        var balance = parseInt(data.balance);
+        App.contracts.TenancyAgreementFactory.deployed().then(function(factoryInstance) {
+          return ERC20Instance.approve(factoryInstance.address, balance, {from: account});
+        }).then(function(result) {
+          alert("approve success");
+        });
+
+      }).catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
+    });
+  },
+
+  showTokenBalance: function () {
+    web3.eth.getAccounts(function(error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+      console.log("Showing Balance")
+      var account = accounts[0];
+      App.contracts.ERC20.deployed().then(function(instance) {
+        var ERC20Instance = instance;
+        console.log("Tryna Get Balance")
+
+        return ERC20Instance.balanceOf(account,  {from: account});
+      }).then(function(result)
+      {
+        alert(result);
+      })
+      .catch(function(err) {
+        console.log('handle fail');
+        console.log(err.message);
+      });
+
     });
   },
 
@@ -181,10 +401,8 @@ App = {
         console.log(tenantAdd);
         // nego as tenant
         if (event.target.id == "negotiate-tenant-btn"){
-          console.log('nego as tenant');
           return tenancyInstance.negotiatePriceTenant(negotPrice, {from: account});
         } else {
-          console.log('nego as owner/manager');
           return tenancyInstance.negotiatePriceManagerOwner(tenantAdd,negomPrice, {from: account});
         }
       }).then(function(result) {
@@ -237,7 +455,7 @@ App = {
         tenancyInstance = instance;
         return tenancyInstance.acceptLease( {from: account});
       }).then(function(result) {
-        alert('lease signed!');
+        alert('lease accepted!');
       }).catch(function(err) {
         console.log('sign lease fail');
         console.log(err.message);

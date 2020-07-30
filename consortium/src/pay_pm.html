@@ -44,15 +44,16 @@
         <ul>
           <li class="active"><a href="index.html">Home</a></li>
           <li class="drop-down"><a href="#services">Services</a>
-            <ul>
-              <li><a href="lease.html">Create Agreement</a></li>
-              <li><a href="approve.html">Approve Agreement</a></li>
-              <li><a href="sign.html">Accept Agreement</a></li>
-              <li><a href="rent.html">Rent Payment</a></li>
-              <li><a href="negotiate.html">Negotiate Price</a></li>
-              <li><a href="sign.html">Accept Lease</a></li>
-              <li><a href="bond.html">Retrieve Bond</a></li>
-            </ul>
+          <ul>
+            <li><a href="lease.html">Create Agreement</a></li>
+            <li><a href="approve.html">Approve Agreement</a></li>
+            <li><a href="sign.html">Accept Agreement</a></li>
+            <li><a href="rent.html">Rent Payment</a></li>
+            <li><a href="negotiate.html">Negotiate Price</a></li>
+            <li><a href="sign.html">Accept Lease</a></li>
+            <li><a href="bond.html">Retrieve Bond</a></li>
+
+          </ul>
           </li>
           <li><a href="#team">Team</a></li>
         </ul>
@@ -69,7 +70,7 @@
 
         <ol>
           <li><a href="index.html">Home</a></li>
-          <li>Mint Tokens</li>
+          <li>Pay Property Manager</li>
         </ol>
       </div>
     </section><!-- End Breadcrumbs -->
@@ -78,20 +79,17 @@
       <div class="container">
             <div class="container" data-aos="fade-up">
               <div class="section-title">
-                <h>Minting </h>
+                <h>Pay Property Manager</h>
               </div>
 
                 <div class="align-items-center">
                     <form  role="form">
-                    <div class="form-group" >
-                      <label >Transaction ID</label>
-                      <input type="text" name="tenant" class="form-control" id="tx" placeholder="transaction id" />
+                    <div class="form-group">
+                      <label >Amount</label>
+                      <input type="text" name="tenant" class="form-control" id="pay-amount" placeholder="amount" />
                     </div>
 
-                    <button class = "get-started-btn" type="submit" id = "mint-btn" onclick="return false;">Mint Transaction As Property Manager</button>
-                    <button class = "get-started-btn" type="submit" id = "tx-btn" onclick="return false;">Transfer Token To Tenant As Property Manager</button>
-                    <button class = "get-started-btn" type="submit" id = "appr-btn" onclick="return false;">Approve Token As Tenant</button>
-                    <button class = "get-started-btn" type="submit" id = "show-token-btn" onclick="return false;">Show Current Account Token Balance</button>
+                    <button class = "get-started-btn" type="submit" id = "pay-pm-btn" onclick="return false;">Pay To Property Manager</button>
                   </form>
                 </div>
             </div>
